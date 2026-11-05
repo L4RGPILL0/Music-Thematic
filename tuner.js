@@ -184,7 +184,6 @@ function goHome() {
 window.addEventListener('popstate', (e) => {
   if ($('tuner').classList.contains('show')) goHome();
 });
-}
 
 async function startTuner() {
   $('err').style.display = 'none';
@@ -216,6 +215,7 @@ async function startTuner() {
   smoothCents = null;
   renderStrings();
   showView('tuner');
+  history.pushState({ view: 'tuner' }, '');
   update();
 }
 
@@ -262,8 +262,8 @@ document.querySelectorAll('.inst').forEach(el => {
 });
 
 $('startBtn').addEventListener('click', startTuner);
-$('backBtn').addEventListener('click', () => { stopTuner(); showView('home'); });
-$('stopBtn').addEventListener('click', () => { stopTuner(); showView('home'); });
+$('backBtn').addEventListener('click', () => { if (history.state && history.state.view === 'tuner') history.back(); else goHome(); });
+$('stopBtn').addEventListener('click', () => { if (history.state && history.state.view === 'tuner') history.back(); else goHome(); });
 $('toneBtn').addEventListener('click', toggleTone);
 
 if ('serviceWorker' in navigator) {
