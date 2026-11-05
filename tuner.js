@@ -178,12 +178,48 @@ function showView(id) {
 
 function goHome() {
   stopTuner();
-  showView('home');
+  showView('splash');
+}
+
+function navigate(id) {
+  showView(id);
+  history.pushState({ view: id }, '');
 }
 
 window.addEventListener('popstate', (e) => {
-  if ($('tuner').classList.contains('show')) goHome();
+  if ($('tuner').classList.contains('show')) stopTuner();
+  const target = (e.state && e.state.view) || 'splash';
+  showView(target);
 });
+
+const SOON_INFO = {
+  jam: { title: 'Jam session', desc: 'Jouez votre instrument sur des accompagnements interactifs. Cette fonctionnalité arrive bientôt !' },
+  cours: { title: 'Cours', desc: 'Des leçons progressives pour progresser à votre rythme, du débutant au confirmé. Cette fonctionnalité arrive bientôt !' },
+};
+
+function showSoon(key) {
+  const info = SOON_INFO[key];
+  if (info) {
+    $('soon-title').textContent = info.title;
+    $('soon-desc').textContent = info.desc;
+  }
+  navigate('soon-view');
+}
+
+function initFloatingNotes() {
+  const bg = $('bgfx');
+  const symbols = ['♪', '♫', '♩', '♬'];
+  for (let i = 0; i < 12; i++) {
+    const n = document.createElement('div');
+    n.className = 'note-fly';
+    n.textContent = symbols[i % symbols.length];
+    n.style.left = Math.random() * 100 + '%';
+    n.style.animationDuration = (14 + Math.random() * 18) + 's';
+    n.style.animationDelay = (Math.random() * 20) + 's';
+    n.style.fontSize = (14 + Math.random() * 18) + 'px';
+    bg.appendChild(n);
+  }
+}
 
 async function startTuner() {
   $('err').style.display = 'none';
@@ -261,10 +297,22 @@ document.querySelectorAll('.inst').forEach(el => {
   });
 });
 
+document.querySelectorAll('.menu-btn').forEach(el => {
+  el.addEventListener('click', () => {
+    const nav = el.dataset.nav;
+    if (nav === 'home') navigate('home');
+    else if (nav === 'jam' || nav === 'cours') showSoon(nav);
+  });
+});
+
+$('soon-back').addEventListener('click', () => history.back());
+
 $('startBtn').addEventListener('click', startTuner);
 $('backBtn').addEventListener('click', () => { if (history.state && history.state.view === 'tuner') history.back(); else goHome(); });
 $('stopBtn').addEventListener('click', () => { if (history.state && history.state.view === 'tuner') history.back(); else goHome(); });
 $('toneBtn').addEventListener('click', toggleTone);
+
+initFloatingNotes();
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
