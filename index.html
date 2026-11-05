@@ -4,35 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="MusicThematic">
-<meta name="theme-color" content="#0a0e1a">
+<meta name="theme-color" content="#fff1f2">
 <title>MusicThematic</title>
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root {
-  --bg: #0a0e1a;
-  --bg2: #0f1526;
-  --card: rgba(255,255,255,0.055);
-  --card-solid: #121a2e;
-  --border: rgba(255,255,255,0.1);
-  --text: #eef1f8;
-  --muted: #8d95ad;
-  --in-tune: #34d399;
-  --flat: #fbbf24;
-  --sharp: #fb7185;
-  --accent: #818cf8;
-  --accent2: #22d3ee;
-  --grad: linear-gradient(135deg, #818cf8 0%, #22d3ee 100%);
+  --bg: #ffffff;
+  --card: rgba(255,255,255,0.65);
+  --border: rgba(225,29,72,0.14);
+  --text: #3f2330;
+  --muted: #97707e;
+  --in-tune: #0d9464;
+  --flat: #b45309;
+  --sharp: #e11d48;
+  --accent: #e11d48;
+  --accent2: #f43f5e;
+  --grad: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(129,140,248,0.22), transparent),
-    radial-gradient(ellipse 60% 40% at 90% 110%, rgba(34,211,238,0.12), transparent),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   min-height: 100vh;
   user-select: none; -webkit-user-select: none;
@@ -41,102 +36,219 @@ body {
 .view { display: none; flex-direction: column; align-items: center; min-height: 100vh; padding: max(20px, env(safe-area-inset-top)) 18px max(20px, env(safe-area-inset-bottom)); }
 .view.show { display: flex; }
 
-/* ---------- ACCUEIL ---------- */
-.hero { width: 100%; max-width: 460px; text-align: center; margin-top: 7vh; }
+/* ---------- FOND ANIMÉ (vagues blanc / rouge pâle) ---------- */
+#bgfx { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: linear-gradient(180deg, #ffffff 0%, #fff1f2 55%, #ffe4e6 100%); }
+.blob { position: absolute; border-radius: 50%; filter: blur(80px); }
+.blob.b1 { width: 60vmax; height: 60vmax; background: rgba(254,205,211,0.55); top: -25vmax; left: -20vmax; animation: drift1 18s ease-in-out infinite alternate; }
+.blob.b2 { width: 50vmax; height: 50vmax; background: rgba(253,164,175,0.28); bottom: -20vmax; right: -15vmax; animation: drift2 22s ease-in-out infinite alternate; }
+.blob.b3 { width: 38vmax; height: 38vmax; background: rgba(255,255,255,0.65); top: 35%; left: 50%; animation: drift3 26s ease-in-out infinite alternate; }
+@keyframes drift1 { from { transform: translate(0, 0) scale(1); } to { transform: translate(12vmax, 8vmax) scale(1.15); } }
+@keyframes drift2 { from { transform: translate(0, 0) scale(1); } to { transform: translate(-10vmax, -8vmax) scale(1.2); } }
+@keyframes drift3 { from { transform: translate(0, 0) scale(1); } to { transform: translate(-14vmax, -5vmax) scale(0.9); } }
+
+.wave { position: absolute; left: 0; width: 200%; height: 100%; display: block; }
+.wave svg { width: 100%; height: 100%; display: block; }
+.wave.w1 { bottom: -8%; opacity: 0.5; animation: waveMove 26s linear infinite; }
+.wave.w2 { bottom: -20%; opacity: 0.35; animation: waveMove 38s linear infinite reverse; }
+.wave.w3 { top: -18%; opacity: 0.25; animation: waveMove 46s linear infinite; }
+.wave.w3 svg { transform: scaleY(-1); }
+@keyframes waveMove { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+.note-fly {
+  position: absolute; font-size: 22px; opacity: 0; color: rgba(225,29,72,0.28);
+  animation: floatUp linear infinite;
+}
+@keyframes floatUp {
+  0% { transform: translateY(105vh) rotate(0deg); opacity: 0; }
+  8% { opacity: 0.5; }
+  85% { opacity: 0.5; }
+  100% { transform: translateY(-10vh) rotate(25deg); opacity: 0; }
+}
+
+/* ---------- SPLASH ---------- */
+#splash { justify-content: center; text-align: center; }
+.splash-logo { font-size: 52px; font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; animation: fadeDown 0.9s ease both; }
+.splash-logo em { font-style: normal; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.splash-sub { color: var(--muted); font-size: 14px; margin-top: 12px; letter-spacing: 2px; text-transform: uppercase; animation: fadeDown 0.9s 0.15s ease both; }
+@keyframes fadeDown { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+
+.menu { width: 100%; max-width: 380px; margin-top: 44px; display: flex; flex-direction: column; gap: 14px; }
+.menu-btn {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--card); border: 1.5px solid var(--border);
+  border-radius: 18px; padding: 18px 20px;
+  cursor: pointer; text-align: left;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 4px 18px rgba(225,29,72,0.08);
+  transition: transform 0.15s, border-color 0.2s, background 0.2s;
+  animation: fadeUp 0.7s ease both;
+}
+.menu-btn:nth-child(1) { animation-delay: 0.25s; }
+.menu-btn:nth-child(2) { animation-delay: 0.4s; }
+.menu-btn:nth-child(3) { animation-delay: 0.55s; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.menu-btn:active { transform: scale(0.97); }
+.menu-btn.primary { border-color: rgba(225,29,72,0.35); background: rgba(255,255,255,0.85); }
+.menu-btn .mi { font-size: 26px; width: 40px; text-align: center; }
+.menu-btn .mt { font-size: 17px; font-weight: 700; }
+.menu-btn .md { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.menu-btn .arrow { margin-left: auto; color: var(--muted); font-size: 18px; }
+.menu-btn .soon {
+  margin-left: auto; font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  color: var(--accent); border: 1px solid rgba(225,29,72,0.35);
+  border-radius: 12px; padding: 3px 9px; text-transform: uppercase;
+}
+.splash-footer { margin-top: 40px; font-size: 11px; color: var(--muted); animation: fadeDown 0.9s 0.7s ease both; }
+
+/* ---------- ACCUEIL INSTRUMENTS ---------- */
+.hero { width: 100%; max-width: 460px; text-align: center; margin-top: 5vh; }
 .badge {
   display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 2px;
-  color: var(--accent2); text-transform: uppercase;
-  border: 1px solid rgba(34,211,238,0.35); border-radius: 20px;
+  color: var(--accent); text-transform: uppercase;
+  border: 1px solid rgba(225,29,72,0.3); border-radius: 20px;
   padding: 5px 14px; margin-bottom: 18px;
-  background: rgba(34,211,238,0.08);
+  background: rgba(255,228,230,0.6);
 }
-h1.logo { font-size: 42px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
+h1.logo { font-size: 38px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
 h1.logo em { font-style: normal; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .tagline { color: var(--muted); font-size: 15px; margin-top: 10px; line-height: 1.55; max-width: 320px; margin-left: auto; margin-right: auto; }
-
-.section-title { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin: 34px 0 14px; width: 100%; max-width: 460px; }
-
+.section-title { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin: 30px 0 14px; width: 100%; max-width: 460px; }
 .instruments { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 460px; }
 .inst {
   background: var(--card); border: 1.5px solid var(--border);
   border-radius: 18px; padding: 22px 14px; text-align: center;
   cursor: pointer; transition: border-color 0.2s, transform 0.15s, background 0.2s;
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 4px 18px rgba(225,29,72,0.08);
 }
 .inst:active { transform: scale(0.96); }
-.inst.selected { border-color: var(--accent); background: rgba(129,140,248,0.12); }
+.inst.selected { border-color: var(--accent); background: rgba(255,255,255,0.9); }
 .inst .icon { font-size: 40px; line-height: 1; }
 .inst .name { font-size: 17px; font-weight: 700; margin-top: 10px; }
 .inst .strings { font-size: 11.5px; color: var(--muted); margin-top: 4px; letter-spacing: 1px; }
-
 .features { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 460px; }
-.feat {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 16px; padding: 16px;
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-}
+.feat { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 4px 18px rgba(225,29,72,0.06); }
 .feat .fi { font-size: 22px; }
 .feat .ft { font-size: 14px; font-weight: 700; margin-top: 8px; }
 .feat .fd { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.45; }
-
 #startBtn {
-  width: 100%; max-width: 460px; margin-top: 30px;
+  width: 100%; max-width: 460px; margin-top: 28px;
   font-size: 17px; font-weight: 700; color: #fff; letter-spacing: 0.3px;
   background: var(--grad); border: none; border-radius: 16px; padding: 17px 0;
-  box-shadow: 0 8px 24px rgba(129,140,248,0.35);
+  box-shadow: 0 8px 24px rgba(225,29,72,0.3);
   transition: transform 0.15s, opacity 0.2s;
 }
 #startBtn:active { transform: scale(0.97); }
 #startBtn:disabled { opacity: 0.35; }
 #err { color: var(--sharp); font-size: 13px; text-align: center; max-width: 320px; margin-top: 14px; display: none; line-height: 1.5; }
-footer { margin-top: auto; padding-top: 28px; font-size: 11px; color: var(--muted); text-align: center; }
+footer { margin-top: auto; padding-top: 24px; font-size: 11px; color: var(--muted); text-align: center; }
 
 /* ---------- ACCORDEUR ---------- */
 #tuner header { width: 100%; max-width: 460px; display: flex; justify-content: space-between; align-items: center; }
-.back {
-  font-size: 15px; font-weight: 600; color: var(--muted);
-  background: none; border: none; padding: 8px 12px 8px 0;
-}
+.back { font-size: 15px; font-weight: 600; color: var(--muted); background: none; border: none; padding: 8px 12px 8px 0; }
 #inst-label { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
-
 #note-box { text-align: center; margin-top: 14px; }
 #note { font-size: 88px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 #octave { font-size: 26px; color: var(--muted); vertical-align: super; }
 #freq { font-size: 14px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
 #status { font-size: 15px; font-weight: 600; margin-top: 8px; min-height: 22px; }
-
 #gauge-wrap { position: relative; width: 100%; max-width: 400px; margin: 10px 0 2px; }
 #gauge { width: 100%; height: auto; display: block; }
 #needle { transition: transform 80ms linear; transform-origin: 210px 200px; }
-
 #strings { display: flex; gap: 8px; width: 100%; max-width: 460px; margin-top: 12px; }
 .str {
   flex: 1; background: var(--card); border: 1.5px solid var(--border);
   border-radius: 14px; padding: 12px 2px; text-align: center;
   transition: border-color 0.2s, background 0.2s;
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
 }
 .str .n { font-size: 21px; font-weight: 700; }
 .str .f { font-size: 9.5px; color: var(--muted); margin-top: 2px; }
-.str.active { border-color: var(--accent); background: rgba(129,140,248,0.14); }
-.str.done { border-color: var(--in-tune); background: rgba(52,211,153,0.1); }
+.str.active { border-color: var(--accent); background: rgba(255,255,255,0.9); }
+.str.done { border-color: var(--in-tune); background: rgba(13,148,100,0.08); }
 .str.done .n { color: var(--in-tune); }
-
 #controls { display: flex; gap: 10px; margin-top: 16px; width: 100%; max-width: 460px; }
 button.sec {
   flex: 1; font-size: 14px; font-weight: 600; color: var(--text);
   background: var(--card); border: 1px solid var(--border);
   border-radius: 14px; padding: 13px 0;
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
 }
-button.sec:active { background: rgba(255,255,255,0.1); }
+button.sec:active { background: rgba(255,255,255,0.95); }
 button.sec.on { border-color: var(--accent2); color: var(--accent2); }
+
+/* ---------- BIENTÔT ---------- */
+#soon-view { justify-content: center; text-align: center; }
+.soon-icon { font-size: 60px; }
+#soon-title { font-size: 28px; font-weight: 800; margin-top: 18px; }
+#soon-desc { color: var(--muted); font-size: 14px; margin-top: 10px; max-width: 300px; line-height: 1.6; }
+#soon-back {
+  margin-top: 36px; font-size: 15px; font-weight: 700; color: #fff;
+  background: var(--grad); border: none; border-radius: 14px; padding: 14px 44px;
+}
 </style>
 </head>
 <body>
 
-<!-- ============ ACCUEIL ============ -->
-<div class="view show" id="home">
+<div id="bgfx">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+
+  <div class="wave w1">
+    <svg viewBox="0 0 2880 320" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,160 C240,60 480,60 720,160 C960,260 1200,260 1440,160 C1680,60 1920,60 2160,160 C2400,260 2640,260 2880,160 L2880,320 L0,320 Z" fill="rgba(253,164,175,0.5)"/>
+    </svg>
+  </div>
+  <div class="wave w2">
+    <svg viewBox="0 0 2880 320" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,160 C240,260 480,260 720,160 C960,60 1200,60 1440,160 C1680,260 1920,260 2160,160 C2400,60 2640,60 2880,160 L2880,320 L0,320 Z" fill="rgba(254,205,211,0.6)"/>
+    </svg>
+  </div>
+  <div class="wave w3">
+    <svg viewBox="0 0 2880 320" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,160 C240,60 480,60 720,160 C960,260 1200,260 1440,160 C1680,60 1920,60 2160,160 C2400,260 2640,260 2880,160 L2880,320 L0,320 Z" fill="rgba(255,255,255,0.8)"/>
+    </svg>
+  </div>
+</div>
+
+<!-- ============ SPLASH ============ -->
+<div class="view show" id="splash">
+  <h1 class="splash-logo">Music<em>Thematic</em></h1>
+  <div class="splash-sub">Musique · Accordage · Apprentissage</div>
+
+  <div class="menu">
+    <div class="menu-btn primary" data-nav="home">
+      <div class="mi">🎯</div>
+      <div>
+        <div class="mt">Accordeur</div>
+        <div class="md">Basse ou guitare, précision ±1 cent</div>
+      </div>
+      <div class="arrow">›</div>
+    </div>
+    <div class="menu-btn" data-nav="jam">
+      <div class="mi">🎹</div>
+      <div>
+        <div class="mt">Jam session</div>
+        <div class="md">Jouez avec des accompagnements</div>
+      </div>
+      <div class="soon">Bientôt</div>
+    </div>
+    <div class="menu-btn" data-nav="cours">
+      <div class="mi">📚</div>
+      <div>
+        <div class="mt">Cours</div>
+        <div class="md">Apprenez à votre rythme</div>
+      </div>
+      <div class="soon">Bientôt</div>
+    </div>
+  </div>
+
+  <div class="splash-footer">MusicThematic · v1.0</div>
+</div>
+
+<!-- ============ ACCUEIL INSTRUMENTS ============ -->
+<div class="view" id="home">
   <div class="hero">
     <div class="badge">Accordage &amp; Apprentissage</div>
     <h1 class="logo">Music<em>Thematic</em></h1>
@@ -185,15 +297,15 @@ button.sec.on { border-color: var(--accent2); color: var(--accent2); }
 
   <div id="gauge-wrap">
     <svg id="gauge" viewBox="0 0 420 210" xmlns="http://www.w3.org/2000/svg">
-      <path d="M 20 200 A 190 190 0 0 1 400 200" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="10" stroke-linecap="round"/>
-      <path d="M 210 10 L 210 30" stroke="#8d95ad" stroke-width="2"/>
-      <text x="210" y="52" text-anchor="middle" fill="#8d95ad" font-size="12">accordé</text>
-      <text x="46" y="196" text-anchor="middle" fill="#fbbf24" font-size="13">♭</text>
-      <text x="374" y="196" text-anchor="middle" fill="#fb7185" font-size="13">♯</text>
+      <path d="M 20 200 A 190 190 0 0 1 400 200" fill="none" stroke="rgba(225,29,72,0.15)" stroke-width="10" stroke-linecap="round"/>
+      <path d="M 210 10 L 210 30" stroke="#97707e" stroke-width="2"/>
+      <text x="210" y="52" text-anchor="middle" fill="#97707e" font-size="12">accordé</text>
+      <text x="46" y="196" text-anchor="middle" fill="#b45309" font-size="13">♭</text>
+      <text x="374" y="196" text-anchor="middle" fill="#e11d48" font-size="13">♯</text>
       <g id="needle">
-        <line x1="210" y1="200" x2="210" y2="30" stroke="#eef1f8" stroke-width="3" stroke-linecap="round"/>
+        <line x1="210" y1="200" x2="210" y2="30" stroke="#3f2330" stroke-width="3" stroke-linecap="round"/>
       </g>
-      <circle cx="210" cy="200" r="8" fill="#eef1f8"/>
+      <circle cx="210" cy="200" r="8" fill="#3f2330"/>
     </svg>
   </div>
 
@@ -203,6 +315,14 @@ button.sec.on { border-color: var(--accent2); color: var(--accent2); }
     <button class="sec" id="toneBtn">🔊 Tonalité</button>
     <button class="sec" id="stopBtn">⏹ Arrêter</button>
   </div>
+</div>
+
+<!-- ============ BIENTÔT DISPONIBLE ============ -->
+<div class="view" id="soon-view">
+  <div class="soon-icon">🚧</div>
+  <div id="soon-title">Bientôt disponible</div>
+  <p id="soon-desc">Cette fonctionnalité est en cours de construction. Elle arrivera dans une prochaine mise à jour de MusicThematic.</p>
+  <button id="soon-back">‹ Retour à l'accueil</button>
 </div>
 
 <script src="tuner.js"></script>
