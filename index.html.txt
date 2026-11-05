@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MusicThematic">
+<meta name="theme-color" content="#0d1117">
+<title>MusicThematic</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root {
+  --bg: #0d1117; --card: #161b22; --border: #30363d;
+  --text: #e6edf3; --muted: #8b949e;
+  --in-tune: #3fb950; --flat: #d29922; --sharp: #f85149; --accent: #58a6ff;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg); color: var(--text);
+  display: flex; flex-direction: column; align-items: center;
+  min-height: 100vh;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  user-select: none; -webkit-user-select: none;
+}
+header { width: 100%; max-width: 480px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
+h1 span { color: var(--accent); }
+#a4 { font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 14px; padding: 4px 10px; background: var(--card); }
+
+#start-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; width: 100%; gap: 16px; }
+#start-wrap p { color: var(--muted); font-size: 14px; text-align: center; max-width: 300px; line-height: 1.5; }
+#startBtn {
+  font-size: 18px; font-weight: 600; color: #fff;
+  background: linear-gradient(135deg, #238636, #2ea043);
+  border: none; border-radius: 14px; padding: 16px 40px;
+  box-shadow: 0 4px 14px rgba(46,160,67,0.4);
+}
+#startBtn:active { transform: scale(0.97); }
+#err { color: var(--sharp); font-size: 13px; text-align: center; max-width: 320px; display: none; }
+
+#app { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 480px; flex: 1; }
+
+#note-box { text-align: center; margin-top: 8px; }
+#note { font-size: 96px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+#octave { font-size: 28px; color: var(--muted); vertical-align: super; }
+#freq { font-size: 15px; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
+#status { font-size: 15px; font-weight: 600; margin-top: 6px; min-height: 22px; }
+
+#gauge-wrap { position: relative; width: 100%; max-width: 420px; margin: 12px 0 4px; }
+#gauge { width: 100%; height: auto; display: block; }
+#needle { transition: transform 80ms linear; transform-origin: 210px 200px; }
+
+#strings { display: flex; gap: 8px; width: 100%; margin-top: 14px; }
+.str {
+  flex: 1; background: var(--card); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 12px 4px; text-align: center;
+  transition: border-color 0.2s, background 0.2s;
+}
+.str .n { font-size: 22px; font-weight: 700; }
+.str .f { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.str.active { border-color: var(--accent); background: #1c2536; }
+.str.done { border-color: var(--in-tune); }
+.str.done .n { color: var(--in-tune); }
+
+#controls { display: flex; gap: 10px; margin-top: 16px; width: 100%; }
+button.sec {
+  flex: 1; font-size: 14px; font-weight: 600; color: var(--text);
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 0;
+}
+button.sec:active { background: #21262d; }
+button.sec.on { border-color: var(--accent); color: var(--accent); }
+
+footer { margin-top: auto; padding-top: 16px; font-size: 11px; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span>MusicThematic</span></h1>
+  <div id="a4">A4 = <span id="a4val">440</span> Hz</div>
+</header>
+
+<div id="start-wrap">
+  <button id="startBtn">Démarrer l'accordeur</button>
+  <p>Autorisez l'accès au micro, puis jouez une corde. Fonctionne mieux au calme, micro près de l'instrument.</p>
+  <p id="err"></p>
+</div>
+
+<div id="app">
+  <div id="note-box">
+    <div><span id="note">–</span><span id="octave"></span></div>
+    <div id="freq">– Hz</div>
+    <div id="status"></div>
+  </div>
+
+  <div id="gauge-wrap">
+    <svg id="gauge" viewBox="0 0 420 210" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 20 200 A 190 190 0 0 1 400 200" fill="none" stroke="#30363d" stroke-width="10" stroke-linecap="round"/>
+      <path d="M 210 10 L 210 30" stroke="#8b949e" stroke-width="2"/>
+      <text x="210" y="52" text-anchor="middle" fill="#8b949e" font-size="12">accordé</text>
+      <text x="46" y="196" text-anchor="middle" fill="#d29922" font-size="13">♭</text>
+      <text x="374" y="196" text-anchor="middle" fill="#f85149" font-size="13">♯</text>
+      <g id="needle">
+        <line x1="210" y1="200" x2="210" y2="30" stroke="#e6edf3" stroke-width="3" stroke-linecap="round"/>
+      </g>
+      <circle cx="210" cy="200" r="8" fill="#e6edf3"/>
+    </svg>
+  </div>
+
+  <div id="strings">
+    <div class="str" data-f="41.20"><div class="n">E</div><div class="f">41.2 Hz</div></div>
+    <div class="str" data-f="55.00"><div class="n">A</div><div class="f">55.0 Hz</div></div>
+    <div class="str" data-f="73.42"><div class="n">D</div><div class="f">73.4 Hz</div></div>
+    <div class="str" data-f="98.00"><div class="n">G</div><div class="f">98.0 Hz</div></div>
+  </div>
+
+  <div id="controls">
+    <button class="sec" id="toneBtn">🔊 Tonalité</button>
+    <button class="sec" id="stopBtn">⏹ Arrêter</button>
+  </div>
+</div>
+
+<footer>Ajoutez cette page à l'écran d'accueil<br>pour l'utiliser comme une app.</footer>
+
+<script src="tuner.js"></script>
+</body>
+</html>

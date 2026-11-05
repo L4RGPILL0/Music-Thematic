@@ -1,0 +1,10 @@
+{
+  "name": "MusicThematic",
+  "short_name": "MT",
+  "description": "Application multitaches pour apprentissage et accordage de la basse et guitare",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117"
+}
