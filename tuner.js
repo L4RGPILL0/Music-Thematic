@@ -176,6 +176,16 @@ function showView(id) {
   $(id).classList.add('show');
 }
 
+function goHome() {
+  stopTuner();
+  showView('home');
+}
+
+window.addEventListener('popstate', (e) => {
+  if ($('tuner').classList.contains('show')) goHome();
+});
+}
+
 async function startTuner() {
   $('err').style.display = 'none';
   try {
