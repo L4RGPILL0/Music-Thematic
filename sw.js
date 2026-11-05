@@ -1,4 +1,4 @@
-const CACHE = 'musicthematic-v2';
+const CACHE = 'musicthematic-v3';
 const ASSETS = ['./', './index.html', './tuner.js', './manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
