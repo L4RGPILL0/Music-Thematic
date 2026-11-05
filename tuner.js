@@ -1,23 +1,45 @@
 'use strict';
 
-const STRINGS = [
-  { name: 'E', freq: 41.20 },
-  { name: 'A', freq: 55.00 },
-  { name: 'D', freq: 73.42 },
-  { name: 'G', freq: 98.00 },
-];
+const INSTRUMENTS = {
+  basse: {
+    label: 'Basse',
+    lowpass: 320,
+    strings: [
+      { name: 'E', freq: 41.20 },
+      { name: 'A', freq: 55.00 },
+      { name: 'D', freq: 73.42 },
+      { name: 'G', freq: 98.00 },
+    ],
+  },
+  guitare: {
+    label: 'Guitare',
+    lowpass: 1400,
+    strings: [
+      { name: 'E', freq: 82.41 },
+      { name: 'A', freq: 110.00 },
+      { name: 'D', freq: 146.83 },
+      { name: 'G', freq: 196.00 },
+      { name: 'B', freq: 246.94 },
+      { name: 'E', freq: 329.63 },
+    ],
+  },
+};
+
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const A4 = 440;
 const MIN_FREQ = 30;
-const MAX_FREQ = 400;
+const MAX_FREQ = 420;
 const BUFFER_SIZE = 4096;
 
+let selectedInst = 'basse';
 let audioCtx = null;
 let analyser = null;
+let lowpass = null;
 let stream = null;
 let rafId = null;
 let running = false;
 let toneOsc = null;
+let smoothCents = null;
 
 const $ = (id) => document.getElementById(id);
 const buf = new Float32Array(BUFFER_SIZE);
@@ -77,20 +99,27 @@ function freqToNoteInfo(freq) {
 }
 
 function nearestString(freq) {
+  const strings = INSTRUMENTS[selectedInst].strings;
   let best = null;
   let bestDiff = Infinity;
-  for (const s of STRINGS) {
+  for (const s of strings) {
     const cents = 1200 * Math.log2(freq / s.freq);
     if (Math.abs(cents) < Math.abs(bestDiff)) { bestDiff = cents; best = s; }
   }
   return { str: best, cents: bestDiff };
 }
 
-let smoothCents = null;
-
 function setNeedle(cents, idle) {
   const angle = idle ? 0 : (cents / 50) * 84;
   $('needle').style.transform = `rotate(${angle}deg)`;
+}
+
+function renderStrings() {
+  const strings = INSTRUMENTS[selectedInst].strings;
+  $('strings').innerHTML = strings.map((s) =>
+    `<div class="str" data-f="${s.freq.toFixed(2)}"><div class="n">${s.name}</div><div class="f">${s.freq.toFixed(1)} Hz</div></div>`
+  ).join('');
+  $('inst-label').textContent = INSTRUMENTS[selectedInst].label;
 }
 
 function update() {
@@ -134,15 +163,20 @@ function update() {
     status.style.color = 'var(--sharp)';
   }
 
+  const targetF = near.str.freq.toFixed(2);
   document.querySelectorAll('.str').forEach(el => {
-    const isTarget = el.querySelector('.n').textContent === near.str.name;
+    const isTarget = el.dataset.f === targetF;
     el.classList.toggle('active', isTarget && !inTune);
     el.classList.toggle('done', isTarget && inTune);
   });
 }
 
-async function start() {
-  if (running) return;
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('show'));
+  $(id).classList.add('show');
+}
+
+async function startTuner() {
   $('err').style.display = 'none';
   try {
     stream = await navigator.mediaDevices.getUserMedia({
@@ -158,9 +192,9 @@ async function start() {
   await audioCtx.resume();
 
   const sourceNode = audioCtx.createMediaStreamSource(stream);
-  const lowpass = audioCtx.createBiquadFilter();
+  lowpass = audioCtx.createBiquadFilter();
   lowpass.type = 'lowpass';
-  lowpass.frequency.value = 320;
+  lowpass.frequency.value = INSTRUMENTS[selectedInst].lowpass;
   lowpass.Q.value = 0.7;
   analyser = audioCtx.createAnalyser();
   analyser.fftSize = BUFFER_SIZE;
@@ -169,22 +203,24 @@ async function start() {
   lowpass.connect(analyser);
 
   running = true;
-  $('start-wrap').style.display = 'none';
-  $('app').style.display = 'flex';
+  smoothCents = null;
+  renderStrings();
+  showView('tuner');
   update();
 }
 
-function stop() {
+function stopTuner() {
   running = false;
   if (rafId) cancelAnimationFrame(rafId);
   if (toneOsc) { toneOsc.stop(); toneOsc = null; $('toneBtn').classList.remove('on'); }
   if (stream) stream.getTracks().forEach(t => t.stop());
   if (audioCtx) audioCtx.close();
-  $('app').style.display = 'none';
-  $('start-wrap').style.display = 'flex';
+  audioCtx = null;
+  stream = null;
 }
 
 function toggleTone() {
+  if (!audioCtx) return;
   if (toneOsc) {
     toneOsc.stop();
     toneOsc = null;
@@ -192,7 +228,7 @@ function toggleTone() {
     return;
   }
   const active = document.querySelector('.str.active, .str.done');
-  const freq = active ? parseFloat(active.dataset.f) : STRINGS[0].freq;
+  const freq = active ? parseFloat(active.dataset.f) : INSTRUMENTS[selectedInst].strings[0].freq;
   toneOsc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   toneOsc.frequency.value = freq;
@@ -204,8 +240,20 @@ function toggleTone() {
   $('toneBtn').classList.add('on');
 }
 
-$('startBtn').addEventListener('click', start);
-$('stopBtn').addEventListener('click', stop);
+document.querySelectorAll('.inst').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.inst').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedInst = el.dataset.inst;
+    const btn = $('startBtn');
+    btn.disabled = false;
+    btn.textContent = `Accorder ma ${INSTRUMENTS[selectedInst].label.toLowerCase()}`;
+  });
+});
+
+$('startBtn').addEventListener('click', startTuner);
+$('backBtn').addEventListener('click', () => { stopTuner(); showView('home'); });
+$('stopBtn').addEventListener('click', () => { stopTuner(); showView('home'); });
 $('toneBtn').addEventListener('click', toggleTone);
 
 if ('serviceWorker' in navigator) {
